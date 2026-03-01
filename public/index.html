@@ -253,6 +253,11 @@
           gap: 8px;
           background: var(--bg);
           border-top: 1px solid var(--border);
+
+          /* slick part */
+          transform: translateY(0px);
+          transition: transform 180ms ease;
+          will-change: transform;
         }
 
         input {
@@ -488,6 +493,32 @@
       window.addEventListener("resize", () => {
         scrollToBottom();
       });
+
+      // --- Mobile keyboard smooth composer lift (iOS/Android) ---
+      (function enableKeyboardLift() {
+        if (!window.visualViewport) return;
+
+        const vv = window.visualViewport;
+
+        const update = () => {
+        // When the keyboard opens, vv.height shrinks.
+        // The "gap" between layout viewport and visual viewport is roughly:
+        const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+
+        // Move the composer up by that amount
+        form.style.transform = `translateY(${-keyboardHeight}px)`;
+
+        // Keep the latest messages visible too
+        // (Only if user is near the bottom—matches your scrollToBottom behavior)
+        if (typeof scrollToBottom === "function") scrollToBottom();
+      };
+
+      vv.addEventListener("resize", update);
+      vv.addEventListener("scroll", update); // handles iOS offsetTop changes
+      window.addEventListener("orientationchange", () => setTimeout(update, 50));
+
+      update();
+    })();
 
     </script>
   </body>
