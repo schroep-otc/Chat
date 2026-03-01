@@ -208,6 +208,8 @@
 
         #messages {
           flex: 1;
+          overflow-y: auto;
+          scroll-behavior: smooth;
           margin: 8px 0 0;
           border: none;
           border-top: 1px solid var(--border);
@@ -335,6 +337,18 @@
         return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       }
 
+      function scrollToBottom(force = false) {
+        const threshold = 100; // px from bottom
+        const distanceFromBottom =
+          messages.scrollHeight - messages.scrollTop - messages.clientHeight;
+
+        if (force || distanceFromBottom < threshold) {
+          requestAnimationFrame(() => {
+          messages.scrollTop = messages.scrollHeight;
+          });
+        }
+      }
+
       function addBubble({ align = "left", variant = "other", name = "", time = "", text = "" }) {
         const row = document.createElement("li");
         row.className = `row ${align}`;
@@ -369,10 +383,10 @@
 
         row.appendChild(bubble);
         messages.appendChild(row);
+        scrollToBottom();
 
-        // Auto-scroll within the message panel
-        messages.scrollTop = messages.scrollHeight;
       }
+      
 
       // -------- Username + room --------
       let username = getOrAsk("chat_username", "Enter your username:", "Anonymous");
@@ -392,7 +406,7 @@
       // -------- Messages --------
       socket.on("chat message", (msg) => {
         const mine = msg.username === username;
-
+        
         // Desktop shows header; mobile hides header via CSS
         addBubble({
           align: mine ? "right" : "left",
@@ -469,6 +483,12 @@
       // Focus input and keep scroll pinned on load
       input.focus();
       setTimeout(() => { messages.scrollTop = messages.scrollHeight; }, 0);
+
+      // Handle keyboard resize
+      window.addEventListener("resize", () => {
+        scrollToBottom();
+      });
+
     </script>
   </body>
 </html>
