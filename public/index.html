@@ -4,27 +4,191 @@
     <meta charset="utf-8" />
     <title>Heated Chat</title>
     <style>
-      body { font-family: Arial, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 12px; }
-      #topbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-      #meta { color: #555; font-size: 14px; }
-      #typing { color: #777; font-size: 14px; height: 18px; margin: 8px 0; }
-      #messages { list-style: none; padding: 0; }
-      #messages li { padding: 6px 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 8px; }
-      #messages li.system { border-style: dashed; color: #555; font-style: italic; }
-      form { display: flex; gap: 8px; margin-top: 12px; }
-      input { flex: 1; padding: 10px; }
-      button { padding: 10px 14px; }
+      :root {
+        --bg: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+
+        --panel: #f9fafb;
+
+        --bubble-other: #f3f4f6;
+        --bubble-mine: #e0f2fe;
+        --bubble-system: #fff7ed;
+
+        --shadow: rgba(0, 0, 0, 0.06);
+      }
+
+      [data-theme="dark"] {
+        --bg: #0b1220;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #1f2937;
+
+        --panel: #0f172a;
+
+        --bubble-other: #111827;
+        --bubble-mine: #0b3a5a;
+        --bubble-system: #2a1f14;
+
+        --shadow: rgba(0, 0, 0, 0.35);
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 820px;
+        margin: 24px auto;
+        padding: 0 12px;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      #topbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+
+      #leftTop {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+
+      h2 { margin: 0; }
+
+      #meta {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      #controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      button {
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        border-radius: 10px;
+        cursor: pointer;
+        box-shadow: 0 1px 0 var(--shadow);
+      }
+      button:hover { filter: brightness(0.98); }
+      button:active { transform: translateY(1px); }
+
+      #typing {
+        color: var(--muted);
+        font-size: 14px;
+        height: 18px;
+        margin: 10px 2px 8px;
+      }
+
+      /* Chat area */
+      #messages {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 14px;
+        padding: 12px;
+        min-height: 280px;
+        box-shadow: 0 6px 20px var(--shadow);
+      }
+
+      /* Each row can align left/right */
+      .row {
+        display: flex;
+        margin: 8px 0;
+      }
+      .row.left { justify-content: flex-start; }
+      .row.right { justify-content: flex-end; }
+      .row.center { justify-content: center; }
+
+      /* Bubbles */
+      .bubble {
+        max-width: min(560px, 92%);
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        line-height: 1.25rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .bubble.other { background: var(--bubble-other); }
+      .bubble.mine { background: var(--bubble-mine); }
+      .bubble.system { background: var(--bubble-system); font-style: italic; color: var(--muted); }
+
+      .bubbleHeader {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        margin-bottom: 6px;
+      }
+
+      .name {
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .time {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .text {
+        font-size: 14px;
+      }
+
+      /* Form */
+      form {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      input {
+        flex: 1;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        outline: none;
+      }
+
+      input::placeholder { color: var(--muted); }
+
+      /* Small screens */
+      @media (max-width: 520px) {
+        #controls { width: 100%; justify-content: flex-end; }
+      }
     </style>
   </head>
 
   <body>
     <div id="topbar">
-      <h2 style="margin: 0;">Heated Chat</h2>
-      <div id="meta"></div>
-      <button id="change" type="button">Change name/room</button>
+      <div id="leftTop">
+        <h2>Heated Chat</h2>
+        <div id="meta"></div>
+      </div>
+
+      <div id="controls">
+        <button id="theme" type="button">🌙 Dark</button>
+        <button id="change" type="button">Change name/room</button>
+      </div>
     </div>
 
     <div id="typing"></div>
+
     <ul id="messages"></ul>
 
     <form id="form">
@@ -42,7 +206,24 @@
       const meta = document.getElementById("meta");
       const typingEl = document.getElementById("typing");
       const changeBtn = document.getElementById("change");
+      const themeBtn = document.getElementById("theme");
 
+      // ---------- Dark mode toggle ----------
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        themeBtn.textContent = theme === "dark" ? "☀️ Light" : "🌙 Dark";
+      }
+      const savedTheme = localStorage.getItem("chat_theme") || "light";
+      applyTheme(savedTheme);
+
+      themeBtn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme") || "light";
+        const next = current === "dark" ? "light" : "dark";
+        localStorage.setItem("chat_theme", next);
+        applyTheme(next);
+      });
+
+      // ---------- Helpers ----------
       function getOrAsk(key, promptText, fallback) {
         let val = localStorage.getItem(key);
         if (!val) {
@@ -57,11 +238,41 @@
         return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       }
 
-      function addLine(text, isSystem = false) {
-        const li = document.createElement("li");
-        li.textContent = text;
-        if (isSystem) li.classList.add("system");
-        messages.appendChild(li);
+      function addBubble({ align = "left", variant = "other", name = "", time = "", text = "" }) {
+        const row = document.createElement("li");
+        row.className = `row ${align}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${variant}`;
+
+        if (variant === "system") {
+          // system messages: single line
+          bubble.textContent = text;
+        } else {
+          const header = document.createElement("div");
+          header.className = "bubbleHeader";
+
+          const nameEl = document.createElement("div");
+          nameEl.className = "name";
+          nameEl.textContent = name;
+
+          const timeEl = document.createElement("div");
+          timeEl.className = "time";
+          timeEl.textContent = time;
+
+          header.appendChild(nameEl);
+          header.appendChild(timeEl);
+
+          const body = document.createElement("div");
+          body.className = "text";
+          body.textContent = text;
+
+          bubble.appendChild(header);
+          bubble.appendChild(body);
+        }
+
+        row.appendChild(bubble);
+        messages.appendChild(row);
         window.scrollTo(0, document.body.scrollHeight);
       }
 
@@ -70,34 +281,39 @@
       let room = getOrAsk("chat_room", "Enter room code (share this with your friend):", "lobby");
 
       // ---------- Room password ----------
-      // We do NOT store password in localStorage (safer).
-      // If the password is wrong, the server will send auth_error then disconnect.
+      // Not stored (safer). You’ll enter it each reload/new tab.
       const password = window.prompt("Room password:") || "";
 
       meta.textContent = `Room: ${room} | You: ${username}`;
 
-      // Join the room with password
       socket.emit("join", { username, room, password });
 
-      // If password is wrong (server emits auth_error then disconnects)
       socket.on("auth_error", (msg) => {
         alert(msg || "Wrong password.");
-        // Optional: let you easily re-enter name/room (uncomment if you want)
-        // localStorage.removeItem("chat_username");
-        // localStorage.removeItem("chat_room");
       });
 
-      // ---------- Level 1: timestamps + join/leave notifications ----------
+      // ---------- Messages ----------
       socket.on("chat message", (msg) => {
-        addLine(`[${formatTime(msg.t)}] ${msg.username}: ${msg.text}`);
+        const mine = msg.username === username;
+        addBubble({
+          align: mine ? "right" : "left",
+          variant: mine ? "mine" : "other",
+          name: mine ? "You" : msg.username,
+          time: formatTime(msg.t),
+          text: msg.text
+        });
       });
 
       socket.on("system", (evt) => {
         const action = evt.type === "join" ? "joined" : "left";
-        addLine(`[${formatTime(evt.t)}] ${evt.username} ${action} the room`, true);
+        addBubble({
+          align: "center",
+          variant: "system",
+          text: `[${formatTime(evt.t)}] ${evt.username} ${action} the room`
+        });
       });
 
-      // ---------- Level 1: typing indicator ----------
+      // ---------- Typing indicator ----------
       const typingUsers = new Set();
       let typingTimeout = null;
 
@@ -106,7 +322,11 @@
           typingEl.textContent = "";
           return;
         }
-        const names = Array.from(typingUsers);
+        const names = Array.from(typingUsers).filter(n => n && n !== username);
+        if (names.length === 0) {
+          typingEl.textContent = "";
+          return;
+        }
         typingEl.textContent =
           names.length === 1 ? `${names[0]} is typing…` : `${names.join(", ")} are typing…`;
       }
@@ -126,7 +346,7 @@
         }, 900);
       });
 
-      // Stop typing + send message
+      // Send message
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         const text = input.value.trim();
@@ -136,6 +356,7 @@
         socket.emit("typing", false);
 
         input.value = "";
+        input.focus();
       });
 
       // Change username/room button
@@ -144,6 +365,9 @@
         localStorage.removeItem("chat_room");
         window.location.reload();
       });
+
+      // UX: focus input on load
+      input.focus();
     </script>
   </body>
 </html>
