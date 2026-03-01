@@ -288,7 +288,7 @@
       <ul id="messages"></ul>
 
       <form id="form">
-        <input id="input" autocomplete="off" placeholder="Type a message..." />
+        <input id="input" autocomplete="off" placeholder="Type a message..." enterkeyhint="send" />
         <button type="submit">Send</button>
       </form>
     </div>
@@ -449,6 +449,14 @@
         socket.emit("typing", false);
         input.value = "";
         input.focus();
+      });
+
+      // Let's return key send message
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();        // prevent newline
+        form.requestSubmit();
+        }
       });
 
       // Change username/room button
