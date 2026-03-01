@@ -2,7 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <!-- IMPORTANT for phones -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
     <title>Heated Chat</title>
+
     <style>
       :root {
         --bg: #ffffff;
@@ -17,6 +21,9 @@
         --bubble-system: #fff7ed;
 
         --shadow: rgba(0, 0, 0, 0.06);
+
+        --ios-blue: #0a84ff;
+        --radius: 16px;
       }
 
       [data-theme="dark"] {
@@ -34,8 +41,10 @@
         --shadow: rgba(0, 0, 0, 0.35);
       }
 
+      * { box-sizing: border-box; }
+
       body {
-        font-family: Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
         max-width: 820px;
         margin: 24px auto;
         padding: 0 12px;
@@ -43,6 +52,7 @@
         color: var(--text);
       }
 
+      /* Header */
       #topbar {
         display: flex;
         gap: 10px;
@@ -76,13 +86,14 @@
         border: 1px solid var(--border);
         background: var(--panel);
         color: var(--text);
-        border-radius: 10px;
+        border-radius: 12px;
         cursor: pointer;
         box-shadow: 0 1px 0 var(--shadow);
       }
       button:hover { filter: brightness(0.98); }
       button:active { transform: translateY(1px); }
 
+      /* Typing */
       #typing {
         color: var(--muted);
         font-size: 14px;
@@ -90,24 +101,23 @@
         margin: 10px 2px 8px;
       }
 
-      /* Chat area */
+      /* Chat container (desktop) */
       #messages {
         list-style: none;
-        padding: 0;
+        padding: 12px;
         margin: 0;
         border: 1px solid var(--border);
         background: var(--panel);
-        border-radius: 14px;
-        padding: 12px;
-        min-height: 280px;
+        border-radius: 16px;
+        min-height: 320px;
         box-shadow: 0 6px 20px var(--shadow);
+
+        /* allow smooth scrolling */
+        overflow-y: auto;
       }
 
-      /* Each row can align left/right */
-      .row {
-        display: flex;
-        margin: 8px 0;
-      }
+      /* Rows */
+      .row { display: flex; margin: 8px 0; }
       .row.left { justify-content: flex-start; }
       .row.right { justify-content: flex-end; }
       .row.center { justify-content: center; }
@@ -116,7 +126,7 @@
       .bubble {
         max-width: min(560px, 92%);
         padding: 10px 12px;
-        border-radius: 14px;
+        border-radius: var(--radius);
         border: 1px solid var(--border);
         line-height: 1.25rem;
         white-space: pre-wrap;
@@ -124,7 +134,7 @@
       }
 
       .bubble.other { background: var(--bubble-other); }
-      .bubble.mine { background: var(--bubble-mine); }
+      .bubble.mine { background: var(--bubble-mine); border-color: transparent; }
       .bubble.system { background: var(--bubble-system); font-style: italic; color: var(--muted); }
 
       .bubbleHeader {
@@ -134,21 +144,11 @@
         margin-bottom: 6px;
       }
 
-      .name {
-        font-weight: 700;
-        font-size: 13px;
-      }
+      .name { font-weight: 700; font-size: 13px; }
+      .time { font-size: 12px; color: var(--muted); }
+      .text { font-size: 14px; }
 
-      .time {
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .text {
-        font-size: 14px;
-      }
-
-      /* Form */
+      /* Composer (desktop) */
       form {
         display: flex;
         gap: 8px;
@@ -167,34 +167,131 @@
 
       input::placeholder { color: var(--muted); }
 
-      /* Small screens */
-      @media (max-width: 520px) {
-        #controls { width: 100%; justify-content: flex-end; }
+      /* ---- iMessage-ish MOBILE MODE ---- */
+      @media (max-width: 600px) {
+        body {
+          max-width: none;
+          margin: 0;
+          padding: 0;
+          height: 100dvh; /* dynamic viewport height (better with keyboard) */
+          overflow: hidden; /* we will scroll inside the message list */
+        }
+
+        /* App layout: header, typing, messages, composer fixed */
+        #app {
+          display: flex;
+          flex-direction: column;
+          height: 100dvh;
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+          background: var(--bg);
+        }
+
+        #topbar {
+          padding: 10px 12px 6px;
+          border-bottom: 1px solid var(--border);
+          background: var(--bg);
+        }
+
+        #leftTop h2 { font-size: 18px; }
+        #meta { font-size: 12px; }
+
+        #controls button {
+          padding: 8px 10px;
+          border-radius: 12px;
+        }
+
+        #typing {
+          margin: 6px 12px 0;
+          height: 18px;
+        }
+
+        #messages {
+          flex: 1;
+          margin: 8px 0 0;
+          border: none;
+          border-top: 1px solid var(--border);
+          border-radius: 0;
+          box-shadow: none;
+          padding: 12px 12px 10px;
+          background: var(--bg);
+        }
+
+        /* Bigger bubbles, like iMessage */
+        .bubble {
+          max-width: 78%;
+          border-radius: 18px;
+          padding: 10px 12px;
+        }
+
+        .bubbleHeader { display: none; } /* iMessage usually doesn't show headers */
+        .text { font-size: 16px; line-height: 1.35rem; }
+
+        /* Make mine feel iMessage-y */
+        .bubble.mine {
+          background: var(--ios-blue);
+          color: #fff;
+        }
+        [data-theme="dark"] .bubble.mine {
+          background: var(--ios-blue);
+          color: #fff;
+        }
+
+        .bubble.system {
+          border-style: dashed;
+          opacity: 0.9;
+        }
+
+        /* Composer pinned to bottom */
+        form {
+          position: sticky;
+          bottom: 0;
+          margin: 0;
+          padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+          gap: 8px;
+          background: var(--bg);
+          border-top: 1px solid var(--border);
+        }
+
+        input {
+          border-radius: 20px;
+          padding: 12px 14px;
+          font-size: 16px; /* prevents iOS zoom */
+        }
+
+        button[type="submit"] {
+          border-radius: 18px;
+          padding: 10px 14px;
+          font-weight: 600;
+        }
       }
     </style>
   </head>
 
   <body>
-    <div id="topbar">
-      <div id="leftTop">
-        <h2>Heated Chat</h2>
-        <div id="meta"></div>
+    <!-- Wrapper used for mobile layout -->
+    <div id="app">
+      <div id="topbar">
+        <div id="leftTop">
+          <h2>Heated Chat</h2>
+          <div id="meta"></div>
+        </div>
+
+        <div id="controls">
+          <button id="theme" type="button">🌙 Dark</button>
+          <button id="change" type="button">Change name/room</button>
+        </div>
       </div>
 
-      <div id="controls">
-        <button id="theme" type="button">🌙 Dark</button>
-        <button id="change" type="button">Change name/room</button>
-      </div>
+      <div id="typing"></div>
+
+      <ul id="messages"></ul>
+
+      <form id="form">
+        <input id="input" autocomplete="off" placeholder="Type a message..." />
+        <button type="submit">Send</button>
+      </form>
     </div>
-
-    <div id="typing"></div>
-
-    <ul id="messages"></ul>
-
-    <form id="form">
-      <input id="input" autocomplete="off" placeholder="Type a message..." />
-      <button type="submit">Send</button>
-    </form>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -208,7 +305,7 @@
       const changeBtn = document.getElementById("change");
       const themeBtn = document.getElementById("theme");
 
-      // ---------- Dark mode toggle ----------
+      // -------- Dark mode toggle --------
       function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
         themeBtn.textContent = theme === "dark" ? "☀️ Light" : "🌙 Dark";
@@ -223,7 +320,7 @@
         applyTheme(next);
       });
 
-      // ---------- Helpers ----------
+      // -------- Helpers --------
       function getOrAsk(key, promptText, fallback) {
         let val = localStorage.getItem(key);
         if (!val) {
@@ -246,7 +343,6 @@
         bubble.className = `bubble ${variant}`;
 
         if (variant === "system") {
-          // system messages: single line
           bubble.textContent = text;
         } else {
           const header = document.createElement("div");
@@ -273,15 +369,16 @@
 
         row.appendChild(bubble);
         messages.appendChild(row);
-        window.scrollTo(0, document.body.scrollHeight);
+
+        // Auto-scroll within the message panel
+        messages.scrollTop = messages.scrollHeight;
       }
 
-      // ---------- Level 1: username + room code ----------
+      // -------- Username + room --------
       let username = getOrAsk("chat_username", "Enter your username:", "Anonymous");
       let room = getOrAsk("chat_room", "Enter room code (share this with your friend):", "lobby");
 
-      // ---------- Room password ----------
-      // Not stored (safer). You’ll enter it each reload/new tab.
+      // -------- Room password --------
       const password = window.prompt("Room password:") || "";
 
       meta.textContent = `Room: ${room} | You: ${username}`;
@@ -292,9 +389,11 @@
         alert(msg || "Wrong password.");
       });
 
-      // ---------- Messages ----------
+      // -------- Messages --------
       socket.on("chat message", (msg) => {
         const mine = msg.username === username;
+
+        // Desktop shows header; mobile hides header via CSS
         addBubble({
           align: mine ? "right" : "left",
           variant: mine ? "mine" : "other",
@@ -313,15 +412,11 @@
         });
       });
 
-      // ---------- Typing indicator ----------
+      // -------- Typing indicator --------
       const typingUsers = new Set();
       let typingTimeout = null;
 
       function renderTyping() {
-        if (typingUsers.size === 0) {
-          typingEl.textContent = "";
-          return;
-        }
         const names = Array.from(typingUsers).filter(n => n && n !== username);
         if (names.length === 0) {
           typingEl.textContent = "";
@@ -341,9 +436,7 @@
       input.addEventListener("input", () => {
         socket.emit("typing", true);
         if (typingTimeout) clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-          socket.emit("typing", false);
-        }, 900);
+        typingTimeout = setTimeout(() => socket.emit("typing", false), 900);
       });
 
       // Send message
@@ -354,7 +447,6 @@
 
         socket.emit("chat message", text);
         socket.emit("typing", false);
-
         input.value = "";
         input.focus();
       });
@@ -366,8 +458,9 @@
         window.location.reload();
       });
 
-      // UX: focus input on load
+      // Focus input and keep scroll pinned on load
       input.focus();
+      setTimeout(() => { messages.scrollTop = messages.scrollHeight; }, 0);
     </script>
   </body>
 </html>
